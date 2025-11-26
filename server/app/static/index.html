@@ -1,0 +1,69 @@
+<!-- server/app/static/index.html -->
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>WS Docker Practice</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #log { border:1px solid #ccc; padding:10px; height:300px; overflow:auto; }
+    #controls { margin-top:10px; }
+    input[type=text] { width:300px; }
+  </style>
+</head>
+<body>
+  <h2>WebSocket - Práctica en Docker</h2>
+  <div id="status">Estado: <strong id="stat">desconectado</strong></div>
+  <div id="log"></div>
+
+  <div id="controls">
+    <input id="msg" type="text" placeholder="Escribe un mensaje"/>
+    <button id="send">Enviar</button>
+    <button id="connect">Conectar</button>
+    <button id="disconnect">Desconectar</button>
+  </div>
+
+  <script>
+    let ws;
+    const log = document.getElementById("log");
+    const stat = document.getElementById("stat");
+    function addLog(line) {
+      const p = document.createElement("div");
+      p.textContent = new Date().toLocaleTimeString() + " — " + line;
+      log.appendChild(p);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    document.getElementById("connect").onclick = () => {
+      if (ws && ws.readyState === WebSocket.OPEN) return;
+      const loc = window.location;
+      // si sirve por http(s), usa mismo host: puerto 8000 (el backend)
+      const protocol = loc.protocol === "https:" ? "wss" : "ws";
+      const wsUrl = protocol + "://" + loc.host + "/ws";
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => { stat.textContent = "conectado"; addLog("Conectado a " + wsUrl); };
+      ws.onmessage = (ev) => addLog("RECIBIDO: " + ev.data);
+      ws.onclose = () => { stat.textContent = "desconectado"; addLog("Conexión cerrada"); };
+      ws.onerror = (e) => addLog("Error: " + e);
+    };
+
+    document.getElementById("disconnect").onclick = () => {
+      if (!ws) return;
+      ws.close();
+      ws = null;
+      stat.textContent = "desconectado";
+    };
+
+    document.getElementById("send").onclick = () => {
+      const msg = document.getElementById("msg").value;
+      if (!ws || ws.readyState !== WebSocket.OPEN) { addLog("No conectado"); return; }
+      ws.send(msg);
+      addLog("ENVIADO: " + msg);
+      document.getElementById("msg").value = "";
+    };
+
+    // Autoconectar al abrir la página (opcional)
+    // document.getElementById("connect").click();
+  </script>
+</body>
+</html>

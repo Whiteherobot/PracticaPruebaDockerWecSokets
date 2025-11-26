@@ -1,0 +1,12 @@
+version: "3.8"
+# docker-compose.yml (sin "version:" para evitar la advertencia)
+services:
+  ws-server:
+    build:
+      context: ./server        # directorio con tu app
+      dockerfile: Dockerfile   # nombre del Dockerfile dentro de ./server
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
